@@ -33,35 +33,31 @@ func init() {
 // bumpCmd represents the bump command
 var bumpCmd = &cobra.Command{
 	Use:   "bump",
-	Short: "A brief description of your command",
-	// 	Long: `A longer description that spans multiple lines and likely contains examples
-	// and usage of using your command. For example:
+	Short: "Bump the version based on git history since last version.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("bump called")
 		repo, err := git.PlainOpen(".")
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("%#v\n", repo)
 
-		// options := &git.FetchOptions{
-		// 	Tags:     git.AllTags,
-		// 	Progress: os.Stdout,
-		// }
-		// repo.Fetch(options)
+		options := &git.FetchOptions{
+			Tags:     git.AllTags,
+			Progress: os.Stdout,
+		}
+		repo.Fetch(options)
 
-		// w, err := repo.Worktree()
-		// if err != nil {
-		// 	panic(err)
-		// }
+		w, err := repo.Worktree()
+		if err != nil {
+			panic(err)
+		}
 
-		// s, _ := w.Status()
+		s, _ := w.Status()
 
-		// if !s.IsClean() {
-		// 	fmt.Println("Please release only from a clean working directory (no uncommitted changes).")
-		// 	os.Exit(-1)
-		// }
+		if !s.IsClean() {
+			fmt.Println("Please release only from a clean working directory (no uncommitted changes).")
+			os.Exit(-1)
+		}
 
 		headRef, _ := repo.Head()
 		masterRef, _ := repo.Reference("refs/remotes/origin/master", true)
@@ -173,8 +169,6 @@ var bumpCmd = &cobra.Command{
 		f, _ = os.OpenFile("VERSION", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 		f.WriteString(newVer.String())
 
-		// g.add('VERSION')
-		w, _ := repo.Worktree()
 		w.Add("VERSION")
 		name, email := getGitAuthor()
 		opts := &git.CommitOptions{
