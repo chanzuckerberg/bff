@@ -16,6 +16,8 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
+import log "github.com/sirupsen/logrus"
+
 func init() {
 	rootCmd.AddCommand(bumpCmd)
 
@@ -38,32 +40,47 @@ var bumpCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		repo, err := git.PlainOpen(".")
 		if err != nil {
-			panic(err)
+			log.Fatalf("unable to open git repo %s", err)
 		}
 
 		options := &git.FetchOptions{
 			Tags:     git.AllTags,
 			Progress: os.Stdout,
 		}
-		repo.Fetch(options)
+		err = repo.Fetch(options)
+
+		if err != nil {
+			log.Fatalf("unable to fetch %s", err)
+		}
 
 		w, err := repo.Worktree()
 		if err != nil {
-			panic(err)
+			log.Fatalf("Unable to open worktree %s", err)
 		}
 
-		s, _ := w.Status()
+		s, err := w.Status()
+		if err != nil {
+			log.Fatalf("Unable to get git status %s", err)
+		}
 
 		if !s.IsClean() {
-			fmt.Println("Please release only from a clean working directory (no uncommitted changes).")
-			os.Exit(-1)
+			log.Fatal("Please release only from a clean working directory (no uncommitted changes).")
 		}
 
-		headRef, _ := repo.Head()
-		masterRef, _ := repo.Reference("refs/remotes/origin/master", true)
-		// fixme
-		masterRef = headRef
-		masterCommit, _ := repo.CommitObject(masterRef.Hash())
+		headRef, err := repo.Head()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		masterRef, err := repo.Reference("refs/remotes/origin/master", true)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		masterCommit, err := repo.CommitObject(masterRef.Hash())
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		if headRef.Hash() != masterRef.Hash() {
 			fmt.Println("Please only release versions from master.")
@@ -74,6 +91,10 @@ var bumpCmd = &cobra.Command{
 		tagIndex := make(map[string]string)
 
 		tags, err := repo.Tags()
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		tags.ForEach(func(tag *plumbing.Reference) error {
 			tagIndex[tag.Hash().String()] = strings.Replace(tag.Name().String(), "refs/tags/v", "", -1)
 			return nil
@@ -82,7 +103,8 @@ var bumpCmd = &cobra.Command{
 		commit := masterCommit
 		var latestVersionTag string
 		var latestVersionHash string
-		// TODO refactor to use Log
+
+		// TODO refactor to use repo.Log()
 		for {
 			if v, ok := tagIndex[commit.Hash.String()]; ok {
 				latestVersionTag = v
@@ -91,21 +113,29 @@ var bumpCmd = &cobra.Command{
 			}
 
 			if len(commit.ParentHashes) > 1 {
-				pretty.Print(commit.Hash.String())
-				panic("bff only works with linear history") // FIXME, use errors instead
+				log.Fatal("bff only works with linear history")
 			}
 
 			if len(commit.ParentHashes) == 0 {
-				// we should be at the beginning of this repo's history
+				// When we get here we should be at the beginning of this repo's history
 				break
 			}
-			commit, _ = commit.Parent(0)
+			commit, err = commit.Parent(0)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
 		fmt.Printf("latestVersionTag %s", latestVersionTag)
 
-		f, _ := os.Open("VERSION")
-		d, _ := ioutil.ReadAll(f)
+		f, err := os.Open("VERSION")
+		if err != nil {
+			log.Fatal(err)
+		}
+		d, err := ioutil.ReadAll(f)
+		if err != nil {
+			log.Fatal(err)
+		}
 		fileVersion := string(d)
 
 		if latestVersionTag != fileVersion {
@@ -132,44 +162,53 @@ var bumpCmd = &cobra.Command{
 			}
 
 			if len(commit.ParentHashes) > 1 {
-				pretty.Print(commit.Hash.String())
-				panic("bff only works with linear history") // FIXME, use errors instead
+				log.Fatal("bff only works with linear history")
 			}
 
 			if len(commit.ParentHashes) == 0 {
-				// we should be at the beginning of this repo's history
+				// When we get here we should be at the beginning of this repo's history
 				break
 			}
-			commit, _ = commit.Parent(0)
+			commit, err = commit.Parent(0)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
-		pretty.Print(breaking)
 		pretty.Print(feature)
 
-		ver, _ := semver.Make(latestVersionTag)
-
-		pretty.Print(ver)
+		ver, err := semver.Make(latestVersionTag)
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		releaseType := releaseType(ver.Major, breaking, feature)
-		pretty.Print(releaseType)
 
 		newVer := newVersion(ver, releaseType)
-
-		pretty.Print(ver)
-		pretty.Print(newVer)
 
 		fmt.Printf("release type is: %s\n", releaseType)
 		fmt.Printf("current version is: %s\n", ver)
 		fmt.Printf("proposed version is: %s\n", newVer)
-		procede := prompt.Confirm("procede?")
+		procede := prompt.Confirm("proceed?")
 		if !procede {
-			panic("ok, quitting")
+			log.Fatal("ok, quitting")
 		}
 
-		f, _ = os.OpenFile("VERSION", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-		f.WriteString(newVer.String())
+		f, err = os.OpenFile("VERSION", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-		w.Add("VERSION")
+		_, err = f.WriteString(newVer.String())
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		_, err = w.Add("VERSION")
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		name, email := getGitAuthor()
 		opts := &git.CommitOptions{
 			Author: &object.Signature{
@@ -179,9 +218,12 @@ var bumpCmd = &cobra.Command{
 		}
 		commitHash, err := w.Commit(fmt.Sprintf("release version %s", newVer), opts)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
-		repo.CreateTag(fmt.Sprintf("v%s", newVer), commitHash, nil)
+		_, err = repo.CreateTag(fmt.Sprintf("v%s", newVer), commitHash, nil)
+		if err != nil {
+			log.Fatal(err)
+		}
 	},
 }
 

@@ -32,7 +32,7 @@ coverage: ## run the go coverage tool, reading file coverage.out
 	go tool cover -html=coverage.out
 
 test: ## run the tests
-	gotest -cover ./...
+	gotest -coverprofile=coverage.txt -covermode=atomic ./...
 
 install: ## install the bff binary in $GOPATH/bin
 	# go install ${LDFLAGS} .
