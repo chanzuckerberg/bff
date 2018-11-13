@@ -182,9 +182,9 @@ var bumpCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		releaseType := releaseType(ver.Major, breaking, feature)
+		releaseType := ReleaseType(ver.Major, breaking, feature)
 
-		newVer := newVersion(ver, releaseType)
+		newVer := NewVersion(ver, releaseType)
 
 		fmt.Printf("release type is: %s\n", releaseType)
 		fmt.Printf("current version is: %s\n", ver)
@@ -227,33 +227,35 @@ var bumpCmd = &cobra.Command{
 	},
 }
 
-func releaseType(major uint64, breaking, feature bool) string {
+//  ReleaseType will calculate whether the next release should be major, minor or patch
+func ReleaseType(major uint64, breaking, feature bool) string {
 	if major < 1 {
-		if breaking {
+		if breaking || feature {
 			return "minor"
-		} else {
-			return "patch"
 		}
+		return "patch"
+
 	} else {
 		if breaking {
+			return "major"
+		} else if feature {
 			return "minor"
-		} else {
-			return "patch"
 		}
+		return "patch"
 	}
 }
 
-func newVersion(ver semver.Version, releaseType string) semver.Version {
+func NewVersion(ver semver.Version, releaseType string) semver.Version {
 	switch releaseType {
 	case "major":
-		ver.Major += 1
+		ver.Major++
 		ver.Minor = 0
 		ver.Patch = 0
 	case "minor":
-		ver.Minor += 1
+		ver.Minor++
 		ver.Patch = 0
 	case "patch":
-		ver.Patch += 1
+		ver.Patch++
 	}
 	return ver
 }
