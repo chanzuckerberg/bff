@@ -49,7 +49,7 @@ var bumpCmd = &cobra.Command{
 		}
 		err = repo.Fetch(options)
 
-		if err != nil {
+		if err != nil && err != git.NoErrAlreadyUpToDate {
 			log.Fatalf("unable to fetch %s", err)
 		}
 
