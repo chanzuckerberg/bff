@@ -4,7 +4,7 @@ DIRTY=$(shell if `git diff-index --quiet HEAD --`; then echo false; else echo tr
 # TODO add release flag
 # LDFLAGS=-ldflags "-w -s -X github.com/chanzuckerberg/bff/util.GitSha=${SHA} -X github.com/chanzuckerberg/bff/util.Version=${VERSION} -X github.com/chanzuckerberg/bff/util.Dirty=${DIRTY}"
 
-all: test install
+all: test
 
 setup:
 	go get github.com/rakyll/gotest
