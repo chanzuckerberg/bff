@@ -16,7 +16,7 @@ lint-slow: ## run all linters, even the slow ones
 	gometalinter --vendor --deadline 120s ./...
 
 release: build ## run a release
-	./bff
+	./bff bump
 	git push
 	goreleaser release --rm-dist
 
