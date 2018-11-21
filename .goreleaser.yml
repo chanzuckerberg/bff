@@ -1,0 +1,28 @@
+builds:
+  - binary: bff
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+    ldflags:
+      - "-w -s -X github.com/chanzuckerberg/bff/pkg/util.GitSha={{.Commit}} -X github.com/chanzuckerberg/bff/pkg/util.Version={{.Version}} -X github.com/chanzuckerberg/bff/pkg/util.Dirty=false -X github.com/chanzuckerberg/bff/pkg/util.Release=true"
+
+archive:
+  files:
+  - none*
+
+release:
+  github:
+    owner: chanzuckerberg
+    name: bff
+
+brew:
+  description: "Breaking, Feature, Fix - a tool for managing semantic versioning"
+  github:
+    owner: chanzuckerberg
+    name: homebrew-tap
+  homepage: "https://github.com/chanzuckerberg/bff"
+  test: system "#{bin}/bff version"
