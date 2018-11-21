@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	// Version is the blessclient version
+	// Version is the bff version
 	Version = "undefined"
 	// GitSha is the gitsha used to build this version
 	GitSha = "undefined"
