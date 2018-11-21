@@ -10,14 +10,6 @@
   version = "v3.5.1"
 
 [[projects]]
-  digest = "1:c1163dba31c5df8d1c937313174e21f35da7cbaa164609389fbd1916e19ae347"
-  name = "github.com/chanzuckerberg/blessclient"
-  packages = ["pkg/util"]
-  pruneopts = "UT"
-  revision = "3928c2adcc93a8506b09f50e09700e08d0847d17"
-  version = "v0.3.1"
-
-[[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -333,7 +325,6 @@
   analyzer-version = 1
   input-imports = [
     "github.com/blang/semver",
-    "github.com/chanzuckerberg/blessclient/pkg/util",
     "github.com/kr/pretty",
     "github.com/pkg/errors",
     "github.com/segmentio/go-prompt",
