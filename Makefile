@@ -23,16 +23,19 @@ release: build ## run a release
 release-snapshot: ## run a release
 	goreleaser release --rm-dist --snapshot
 
-build: ## build the binary
+build: dep ## build the binary
 	go build ${LDFLAGS} .
 
 coverage: ## run the go coverage tool, reading file coverage.out
 	go tool cover -html=coverage.out
 
-test: ## run the tests
+dep:
+	dep ensure
+
+test: dep ## run the tests
 	gotest -coverprofile=coverage.txt -covermode=atomic ./...
 
-install: ## install the bff binary in $GOPATH/bin
+install: dep ## install the bff binary in $GOPATH/bin
 	go install ${LDFLAGS} .
 
 help: ## display help for this makefile
