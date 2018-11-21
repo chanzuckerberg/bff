@@ -8,6 +8,7 @@ all: test
 setup:
 	go get github.com/rakyll/gotest
 	go install github.com/rakyll/gotest
+	curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 	
 lint: ## run the fast go linters
 	gometalinter --vendor --fast ./...
@@ -30,7 +31,11 @@ coverage: ## run the go coverage tool, reading file coverage.out
 	go tool cover -html=coverage.out
 
 dep:
+ifdef CI
+	dep check
+else
 	dep ensure
+endif
 
 test: dep ## run the tests
 	gotest -coverprofile=coverage.txt -covermode=atomic ./...
