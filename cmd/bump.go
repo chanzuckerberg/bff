@@ -139,7 +139,7 @@ var bumpCmd = &cobra.Command{
 		fileVersion := string(d)
 
 		if latestVersionTag != fileVersion {
-			panic("tag does not match VERSION file")
+			log.Fatal("tag does not match VERSION file")
 
 		}
 
