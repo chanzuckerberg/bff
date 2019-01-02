@@ -126,7 +126,7 @@ var bumpCmd = &cobra.Command{
 			}
 		}
 
-		fmt.Printf("latestVersionTag %s", latestVersionTag)
+		fmt.Printf("latestVersionTag %s\n", latestVersionTag)
 
 		f, err := os.Open("VERSION")
 		if err != nil {
@@ -137,6 +137,8 @@ var bumpCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 		fileVersion := string(d)
+
+		fmt.Printf("file version %s\n", fileVersion)
 
 		if latestVersionTag != fileVersion {
 			log.Fatal("tag does not match VERSION file")
