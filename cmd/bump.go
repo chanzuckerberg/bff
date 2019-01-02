@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/blang/semver"
 	"github.com/kr/pretty"
@@ -14,9 +15,9 @@ import (
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
-)
 
-import log "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
+)
 
 func init() {
 	rootCmd.AddCommand(bumpCmd)
@@ -209,11 +210,18 @@ var bumpCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		name, email := getGitAuthor()
+		name, email, err := getGitAuthor()
+
+		if err != nil {
+			fmt.Printf("git author name %s", name)
+			fmt.Printf("git author email %s", email)
+			log.Fatal(err)
+		}
 		opts := &git.CommitOptions{
 			Author: &object.Signature{
 				Name:  name,
 				Email: email,
+				When:  time.Now(),
 			},
 		}
 		commitHash, err := w.Commit(fmt.Sprintf("release version %s", newVer), opts)
@@ -260,12 +268,18 @@ func NewVersion(ver semver.Version, releaseType string) semver.Version {
 	return ver
 }
 
-func getGitAuthor() (string, string) {
-	name, _ := runCmd("git config --get user.name")
-	email, _ := runCmd("git config --get user.email")
-	return string(name), string(email)
+func getGitAuthor() (string, string, error) {
+	name, err := runCmd("git", []string{"config", "--get", "user.name"})
+	if err != nil {
+		return "", "", err
+	}
+	email, err := runCmd("git", []string{"config", "--get", "user.email"})
+	if err != nil {
+		return "", "", err
+	}
+	return strings.TrimSpace(string(name)), strings.TrimSpace(string(email)), nil
 }
 
-func runCmd(cmd string) ([]byte, error) {
-	return exec.Command(cmd).Output()
+func runCmd(cmd string, args []string) ([]byte, error) {
+	return exec.Command(cmd, args...).Output()
 }
