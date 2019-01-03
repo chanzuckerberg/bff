@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 
 	"github.com/blang/semver"
+	"github.com/chanzuckerberg/bff/pkg/util"
 	"github.com/kr/pretty"
 	prompt "github.com/segmentio/go-prompt"
 	"github.com/spf13/cobra"
@@ -210,7 +210,7 @@ var bumpCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		name, email, err := getGitAuthor()
+		name, email, err := util.GetGitAuthor()
 
 		if err != nil {
 			fmt.Printf("git author name %s", name)
@@ -266,20 +266,4 @@ func NewVersion(ver semver.Version, releaseType string) semver.Version {
 		ver.Patch++
 	}
 	return ver
-}
-
-func getGitAuthor() (string, string, error) {
-	name, err := runCmd("git", []string{"config", "--get", "user.name"})
-	if err != nil {
-		return "", "", err
-	}
-	email, err := runCmd("git", []string{"config", "--get", "user.email"})
-	if err != nil {
-		return "", "", err
-	}
-	return strings.TrimSpace(string(name)), strings.TrimSpace(string(email)), nil
-}
-
-func runCmd(cmd string, args []string) ([]byte, error) {
-	return exec.Command(cmd, args...).Output()
 }
