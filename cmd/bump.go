@@ -4,19 +4,20 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/blang/semver"
+	"github.com/chanzuckerberg/bff/pkg/util"
 	"github.com/kr/pretty"
 	prompt "github.com/segmentio/go-prompt"
 	"github.com/spf13/cobra"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
-)
 
-import log "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
+)
 
 func init() {
 	rootCmd.AddCommand(bumpCmd)
@@ -209,11 +210,18 @@ var bumpCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		name, email := getGitAuthor()
+		name, email, err := util.GetGitAuthor()
+
+		if err != nil {
+			fmt.Printf("git author name %s", name)
+			fmt.Printf("git author email %s", email)
+			log.Fatal(err)
+		}
 		opts := &git.CommitOptions{
 			Author: &object.Signature{
 				Name:  name,
 				Email: email,
+				When:  time.Now(),
 			},
 		}
 		commitHash, err := w.Commit(fmt.Sprintf("release version %s", newVer), opts)
@@ -258,14 +266,4 @@ func NewVersion(ver semver.Version, releaseType string) semver.Version {
 		ver.Patch++
 	}
 	return ver
-}
-
-func getGitAuthor() (string, string) {
-	name, _ := runCmd("git config --get user.name")
-	email, _ := runCmd("git config --get user.email")
-	return string(name), string(email)
-}
-
-func runCmd(cmd string) ([]byte, error) {
-	return exec.Command(cmd).Output()
 }
