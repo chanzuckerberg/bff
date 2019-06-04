@@ -325,7 +325,6 @@
   analyzer-version = 1
   input-imports = [
     "github.com/blang/semver",
-    "github.com/davecgh/go-spew/spew",
     "github.com/kr/pretty",
     "github.com/pkg/errors",
     "github.com/segmentio/go-prompt",

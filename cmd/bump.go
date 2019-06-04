@@ -9,7 +9,6 @@ import (
 
 	"github.com/blang/semver"
 	"github.com/chanzuckerberg/bff/pkg/util"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/kr/pretty"
 	prompt "github.com/segmentio/go-prompt"
 	log "github.com/sirupsen/logrus"
@@ -101,8 +100,6 @@ var bumpCmd = &cobra.Command{
 			return nil
 		})
 
-		spew.Dump(tags)
-
 		commit := masterCommit
 		var latestVersionTag string
 		var latestVersionHash string
@@ -110,7 +107,6 @@ var bumpCmd = &cobra.Command{
 		// TODO refactor to use repo.Log()
 		for {
 			if v, ok := tagIndex[commit.Hash.String()]; ok {
-				fmt.Println(v)
 				latestVersionTag = v
 				latestVersionHash = commit.Hash.String()
 				break
