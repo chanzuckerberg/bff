@@ -16,26 +16,18 @@ func TestGetCommitLog(t *testing.T) {
 	}{
 		{"non-empty commit, one-line commit message",
 			object.Commit{
-				Hash: [20]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-				// Message: "A commit message\nWith multiple lines\nLast line.",
+				Hash:    [20]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
 				Message: "A commit message",
 			},
-			"* [00010203](../../commit/0001020304050607080900010203040506070809) A commit message\n",
+			"* [00010203](../../commit/0001020304050607080900010203040506070809) A commit message",
 		},
 		{"non-empty commit, multiple line commit message",
 			object.Commit{
 				Hash:    [20]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
 				Message: "A commit message\nWith multiple lines\nLast line.",
 			},
-			"* [00010203](../../commit/0001020304050607080900010203040506070809) A commit message\n",
+			"* [00010203](../../commit/0001020304050607080900010203040506070809) A commit message",
 		},
-		// {"How to test commit == nil?",
-		// 	object.Commit{
-		// 		Hash:    [20]byte{},
-		// 		Message: "",
-		// 	},
-		// 	"",
-		// },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

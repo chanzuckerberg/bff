@@ -72,8 +72,6 @@ func LatestTagCommitHash(repo *git.Repository) (*string, *plumbing.Hash, error) 
 	var latestVersionTag string
 	var latestVersionHash plumbing.Hash
 
-	// TODO refactor to use repo.Log()
-
 	gitLog, err := repo.Log(&git.LogOptions{
 		From:  commit.Hash,
 		Order: git.LogOrderDFS,

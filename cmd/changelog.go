@@ -21,7 +21,7 @@ import (
 func init() {
 	rootCmd.AddCommand(changelogCmd)
 
-	// changelogCmd.Flags().StringP() // If you want to add CLI flags
+	// TODO: changelogCmd.Flags().BoolP("breaking", "b", false, "Breaking release")
 }
 
 var changelogCmd = &cobra.Command{
@@ -31,6 +31,7 @@ var changelogCmd = &cobra.Command{
 		if len(args) != 1 {
 			return errors.New("please supply release version, e.g. `bff changelog 0.20.3`")
 		}
+		newRelease := args[0]
 		repo, err := git.PlainOpen(".")
 		if err != nil {
 			return errors.Wrap(err, "could not open git repo")
@@ -39,10 +40,10 @@ var changelogCmd = &cobra.Command{
 		if err != nil {
 			return errors.Wrap(err, "unable to retrieve latest tag's commit hash")
 		}
-		fmt.Printf("Last tagCommitHash: %s version: %s\n", tagCommitHash, *v)
+		fmt.Printf("Last commit: %s (version: %s)\n", tagCommitHash.String()[:8], *v)
 
 		cIter, err := repo.Log(&git.LogOptions{
-			Order: git.LogOrderCommitterTime, // TODO: is this the order we want?
+			Order: git.LogOrderCommitterTime,
 		})
 		if err != nil {
 			return errors.Wrap(err, "failed to retrieve commit history")
@@ -51,7 +52,7 @@ var changelogCmd = &cobra.Command{
 		releaseLog := bytes.NewBuffer(nil)
 
 		// A release begins with a release header line "## 0.22.0 2019-06-04\n", followed by a list of commits
-		releaseHeader := fmt.Sprintf("## %s %s\n", args[0], time.Now().Format("2006-01-02"))
+		releaseHeader := fmt.Sprintf("## %s %s\n", newRelease, time.Now().Format("2006-01-02"))
 		fmt.Fprintln(releaseLog, releaseHeader)
 
 		// Build the list of commits
@@ -67,10 +68,12 @@ var changelogCmd = &cobra.Command{
 			return errors.Wrap(err, "error generating changelog")
 		}
 
+		fmt.Printf("Updating changelog with release v%s\n", newRelease)
 		err = UpdateChangeLogFile(releaseLog.String())
 		if err != nil {
 			return err
 		}
+		fmt.Println("Done.")
 
 		return nil
 	},
