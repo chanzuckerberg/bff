@@ -1,14 +1,20 @@
 package cmd
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
+	"os"
 	"strings"
+	"syscall"
+	"time"
 
+	"gopkg.in/src-d/go-git.v4/plumbing/storer"
+
+	"github.com/chanzuckerberg/bff/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	git "gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
@@ -19,87 +25,109 @@ func init() {
 }
 
 var changelogCmd = &cobra.Command{
-	Use:   "changelog",
+	Use:   "changelog next-version",
 	Short: "Generate changelog entries based on git history",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) != 1 {
+			return errors.New("please supply release version, e.g. `bff changelog 0.20.3`")
+		}
 		repo, err := git.PlainOpen(".")
 		if err != nil {
 			return errors.Wrap(err, "could not open git repo")
 		}
-		tagCommitHash, err := LatestTagCommitHash(repo)
-		fmt.Printf("Last tagCommitHash: %s\n", tagCommitHash)
+		v, tagCommitHash, err := util.LatestTagCommitHash(repo)
 		if err != nil {
-			return errors.New("unable to retrieve latest tag's commit hash")
+			return errors.Wrap(err, "unable to retrieve latest tag's commit hash")
 		}
+		fmt.Printf("Last tagCommitHash: %s version: %s\n", tagCommitHash, *v)
 
 		cIter, err := repo.Log(&git.LogOptions{
-			All:   true,
-			Order: git.LogOrderCommitterTime,
+			Order: git.LogOrderCommitterTime, // TODO: is this the order we want?
 		})
 		if err != nil {
 			return errors.Wrap(err, "failed to retrieve commit history")
 		}
 
-		var changelog bytes.Buffer
-		curCommit, err := cIter.Next()
-		fmt.Printf("first curCommit %s\n", &curCommit.Hash)
-		for &curCommit.Hash == tagCommitHash {
-			changelog.WriteString(GetCommitLog(curCommit))
-			curCommit, err = cIter.Next()
+		releaseLog := bytes.NewBuffer(nil)
+
+		// A release begins with a release header line "## 0.22.0 2019-06-04\n", followed by a list of commits
+		releaseHeader := fmt.Sprintf("## %s %s\n", args[0], time.Now().Format("2006-01-02"))
+		fmt.Fprintln(releaseLog, releaseHeader)
+
+		// Build the list of commits
+		err = cIter.ForEach(func(commit *object.Commit) error {
+			if tagCommitHash != nil && commit.Hash == *tagCommitHash {
+				return storer.ErrStop
+			}
+
+			_, err = fmt.Fprintln(releaseLog, GetCommitLog(commit))
+			return errors.Wrap(err, "could not append to changelog")
+		})
+		if err != nil {
+			return errors.Wrap(err, "error generating changelog")
 		}
-		fmt.Println(changelog.String())
-		// if tagCommitHash == nil {
-		// 	// no tag found for this repo, get all commits
-		// 	cIter, err = repo.Log(&git.LogOptions{
-		// 		All:   true,
-		// 		Order: git.LogOrderCommitterTime,
-		// 	})
-		// } else {
-		// 	cIter, err = repo.Log(&git.LogOptions{
-		// 		From:  *tagCommitHash,
-		// 		Order: git.LogOrderCommitterTime,
-		// 	})
-		// }
-		// if err != nil {
-		// 	return errors.Wrap(err, "failed to retrieve commit history")
-		// }
-		// var changelog bytes.Buffer
-		// err = cIter.ForEach(func(commit *object.Commit) error {
-		// 	changelog.WriteString(GetCommitLog(commit))
-		// 	return nil
-		// })
-		// fmt.Println(changelog.String())
+
+		err = UpdateChangeLogFile(releaseLog.String())
+		if err != nil {
+			return err
+		}
+
 		return nil
 	},
 }
 
-// LatestTagCommitHash will return commit hash of the latest tag if any, and nil if no tag is found
-func LatestTagCommitHash(repo *git.Repository) (*plumbing.Hash, error) {
-	tagRefs, err := repo.Tags()
-	var lastTag plumbing.Revision
-	err = tagRefs.ForEach(func(tagRef *plumbing.Reference) error {
-		curTag := plumbing.Revision(tagRef.Name().String())
-		fmt.Printf("curTag: %s", curTag)
-		if lastTag < curTag {
-			lastTag = curTag
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, errors.New("unable to retrieve tags")
-	}
-	if lastTag == "" {
-		return nil, nil
-	}
-	return repo.ResolveRevision(lastTag)
-}
-
 // GetCommitLog takes a commit object and returns a commit log, for example:
-// * [2847a2e6](../../commit/2847a2e624ee6736b43cc3a68acd75168d1a75d6) A commit message
+// * [2847a2e6](../../commit/2847a2e624ee6736b43cc3a68acd75368d1a75d1) A commit message
 func GetCommitLog(commit *object.Commit) string {
 	hash := commit.Hash.String()
 	if hash != "" {
-		return fmt.Sprintf("* [%s](../../commit/%s) %s\n", hash[:8], hash, strings.Split(commit.Message, "\n")[0])
+		return fmt.Sprintf("* [%s](../../commit/%s) %s", hash[:8], hash, strings.Split(commit.Message, "\n")[0])
 	}
 	return ""
+}
+
+// UpdateChangeLogFile writes the changelog content of the new version to CHANGELOG.md
+func UpdateChangeLogFile(newContent string) error {
+	filePath := "CHANGELOG.md"
+	f, err := os.OpenFile(filePath, syscall.O_RDWR|syscall.O_CREAT, 0644)
+	if err != nil {
+		return errors.Wrap(err, "unable to open CHANGELOG.md")
+	}
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	var lines []string
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		return errors.Wrap(err, "unable to read CHANGELOG.md")
+	}
+
+	// Insert new content to the second line of the existing content
+	updatedChangeLog := GetNewChangeLog(lines, newContent, 2)
+
+	// Delete the existing changelog, and write the updated changelog
+	f.Truncate(0)
+	f.Seek(0, 0)
+	_, err = f.WriteString(updatedChangeLog)
+	if err != nil {
+		return errors.Wrap(err, "unable to edit CHANGELOG.md")
+	}
+
+	return nil
+}
+
+// GetNewChangeLog inserts new content just before the index'th line and returns all content as string
+func GetNewChangeLog(lines []string, newContent string, index int) string {
+	fileContent := strings.Builder{}
+	for i, line := range lines {
+		if i == index {
+			fileContent.WriteString(newContent)
+			fileContent.WriteByte('\n')
+		}
+		fileContent.WriteString(line)
+		fileContent.WriteByte('\n')
+	}
+
+	return fileContent.String()
 }
