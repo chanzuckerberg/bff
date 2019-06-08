@@ -38,3 +38,40 @@ func TestGetCommitLog(t *testing.T) {
 		})
 	}
 }
+
+func TestGetNewChangeLog(t *testing.T) {
+	tests := []struct {
+		name       string
+		lines      []string
+		newContent string
+		index      int
+		want       string
+	}{
+		{"Insert content to last line",
+			[]string{"Title", "First line", "Second line"},
+			"New content",
+			2,
+			"Title\nFirst line\nNew content\nSecond line\n",
+		},
+		{"Append new content to file with very few lines",
+			[]string{"Title"},
+			"New content",
+			10,
+			"Title\nNew content\n",
+		},
+		{"Insert content to empty file",
+			[]string{},
+			"New content",
+			2,
+			"New content\n",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := cmd.GetNewChangeLog(tt.lines, tt.newContent, tt.index); got != tt.want {
+				fmt.Println(got)
+				t.Errorf("GetNewChangeLog() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

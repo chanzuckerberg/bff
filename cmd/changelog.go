@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"math"
 	"os"
 	"strings"
 	"syscall"
@@ -122,12 +123,14 @@ func UpdateChangeLogFile(newContent string) error {
 
 // GetNewChangeLog inserts new content just before the index'th line and returns all content as string
 func GetNewChangeLog(lines []string, newContent string, index int) string {
+
+	index = int(math.Min(float64(index), float64(len(lines))))
+	lines = append(lines, "")
+	copy(lines[index+1:], lines[index:])
+	lines[index] = newContent
+
 	fileContent := strings.Builder{}
-	for i, line := range lines {
-		if i == index {
-			fileContent.WriteString(newContent)
-			fileContent.WriteByte('\n')
-		}
+	for _, line := range lines {
 		fileContent.WriteString(line)
 		fileContent.WriteByte('\n')
 	}
