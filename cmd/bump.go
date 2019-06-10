@@ -11,12 +11,11 @@ import (
 	"github.com/chanzuckerberg/bff/pkg/util"
 	"github.com/kr/pretty"
 	prompt "github.com/segmentio/go-prompt"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
-
-	log "github.com/sirupsen/logrus"
 )
 
 func init() {
