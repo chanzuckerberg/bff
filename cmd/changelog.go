@@ -122,9 +122,14 @@ func UpdateChangeLogFile(newContent string) error {
 }
 
 // GetNewChangeLog inserts new content just before the index'th line and returns all content as string
+// Negative index is treated as zero index (insert the new content to the beginning of the existing content)
+// If index is greater than the length of existing content is treated as inserting to the last line of the existing
+// content
 func GetNewChangeLog(lines []string, newContent string, index int) string {
-
+	// index must be between 0 and the number of existing lines
+	index = int(math.Max(float64(index), 0.0))
 	index = int(math.Min(float64(index), float64(len(lines))))
+
 	lines = append(lines, "")
 	copy(lines[index+1:], lines[index:])
 	lines[index] = newContent
