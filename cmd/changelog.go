@@ -9,6 +9,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"regexp"
 
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 
@@ -80,12 +81,23 @@ var changelogCmd = &cobra.Command{
 	},
 }
 
-// GetCommitLog takes a commit object and returns a commit log, for example:
-// * [2847a2e6](../../commit/2847a2e624ee6736b43cc3a68acd75368d1a75d1) A commit message
+// GetCommitLog takes a commit object and returns a commit log that may link to a pull request, for example:
+// * [2847a2e6](../../commit/2847a2e624ee6736b43cc3a68acd75368d1a75d1) A commit message 
+// * [2847a2e6](../../commit/2847a2e624ee6736b43cc3a68acd75368d1a75d1) A commit message ([#100](../../pull/100))
 func GetCommitLog(commit *object.Commit) string {
 	hash := commit.Hash.String()
 	if hash != "" {
-		return fmt.Sprintf("* [%s](../../commit/%s) %s", hash[:8], hash, strings.Split(commit.Message, "\n")[0])
+		var commitLog string
+		commitMsg := strings.Split(commit.Message, "\n")[0]
+		r := regexp.MustCompile("\\(#\\d+\\)$")
+		idx := r.FindStringIndex(commitMsg)
+		if idx == nil {
+			commitLog = fmt.Sprintf("* [%s](../../commit/%s) %s", hash[:8], hash, commitMsg)
+		} else {
+			prNum := commitMsg[idx[0]+2:idx[1]-1]
+			commitLog = fmt.Sprintf("* [%s](../../commit/%s) %s([#%s](../../pull/%s))", hash[:8], hash, commitMsg[:idx[0]], prNum, prNum)
+		}	
+		return commitLog
 	}
 	return ""
 }

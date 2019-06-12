@@ -28,6 +28,13 @@ func TestGetCommitLog(t *testing.T) {
 			},
 			"* [00010203](../../commit/0001020304050607080900010203040506070809) A commit message",
 		},
+		{"non-empty commit, one-line commit message with pull request number",
+			object.Commit{
+				Hash:    [20]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+				Message: "A commit message (#100)",
+			},
+			"* [00010203](../../commit/0001020304050607080900010203040506070809) A commit message ([#100](../../pull/100))",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
