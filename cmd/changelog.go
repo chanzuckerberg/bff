@@ -89,13 +89,16 @@ func GetCommitLog(commit *object.Commit) string {
 	if hash != "" {
 		var commitLog string
 		commitMsg := strings.Split(commit.Message, "\n")[0]
+		shortHash := hash[:8]
 		r := regexp.MustCompile("\\(#\\d+\\)$")
 		idx := r.FindStringIndex(commitMsg)
 		if idx == nil {
-			commitLog = fmt.Sprintf("* [%s](../../commit/%s) %s", hash[:8], hash, commitMsg)
+			commitLog = fmt.Sprintf("* [%s](../../commit/%s) %s", shortHash, hash, commitMsg)
 		} else {
-			prNum := commitMsg[idx[0]+2:idx[1]-1]
-			commitLog = fmt.Sprintf("* [%s](../../commit/%s) %s([#%s](../../pull/%s))", hash[:8], hash, commitMsg[:idx[0]], prNum, prNum)
+			// extract message and PR number from commitMsg
+			message, prNum := commitMsg[:idx[0]], commitMsg[idx[0]+2:idx[1]-1]
+			
+			commitLog = fmt.Sprintf("* [%s](../../commit/%s) %s([#%s](../../pull/%s))", shortHash, hash, message, prNum, prNum)
 		}	
 		return commitLog
 	}
