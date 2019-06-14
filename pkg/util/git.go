@@ -10,6 +10,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 // GetGitAuthor returns the author name and email
@@ -86,13 +87,6 @@ func LatestTagCommitHash(repo *git.Repository) (*string, *plumbing.Hash, error) 
 			return storer.ErrStop
 		}
 
-		if len(c.ParentHashes) > 1 {
-			_, err := GetLatestParentCommit(c)
-			if err != nil {
-				return err
-			}
-		}
-
 		if len(c.ParentHashes) == 0 {
 			// When we get here we should be at the beginning of the history
 			return storer.ErrStop
@@ -106,6 +100,9 @@ func LatestTagCommitHash(repo *git.Repository) (*string, *plumbing.Hash, error) 
 // GetLatestParentCommit returns the most recent parent commit
 func GetLatestParentCommit(commit *object.Commit) (*object.Commit, error) {
 	var recentParentCommit *object.Commit
+	if commit.NumParents() > 1 {
+		log.Warnf("Commit %s has more than 1 parent", commit.Hash.String())
+	}
 	for i := 0; i < commit.NumParents(); i++ {
 		currentParentCommit, err := commit.Parent(i)
 		if err != nil {
