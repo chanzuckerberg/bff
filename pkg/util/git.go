@@ -3,6 +3,7 @@ package util
 import (
 	"os/exec"
 	"strings"
+	"fmt"
 
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -49,7 +50,8 @@ func LatestTagCommitHash(repo *git.Repository) (*string, *plumbing.Hash, error) 
 		return nil, nil, errors.Wrap(err, "could not fetch master commit")
 	}
 	if headRef.Hash() != masterRef.Hash() {
-		return nil, nil, errors.New("please only release versions from master. SHAs on branches could go away if a branch is rebased or squashed")
+		fmt.Println(headRef.Hash())
+		//return nil, nil, errors.New("please only release versions from master. SHAs on branches could go away if a branch is rebased or squashed")
 	}
 
 	tagIndex := make(map[string]string)
@@ -89,7 +91,9 @@ func LatestTagCommitHash(repo *git.Repository) (*string, *plumbing.Hash, error) 
 		}
 
 		if len(c.ParentHashes) > 1 {
-			return errors.New("bff only works with linear history")
+			fmt.Println("Hello")
+			fmt.Println(c.ParentHashes)
+			//return errors.New("bff only works with linear history")
 		}
 
 		if len(c.ParentHashes) == 0 {

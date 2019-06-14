@@ -113,7 +113,9 @@ var bumpCmd = &cobra.Command{
 			}
 
 			if len(commit.ParentHashes) > 1 {
-				log.Fatal("bff only works with linear history")
+				//log.Fatal("bff only works with linear history")
+				fmt.Println(commit)
+				fmt.Println(commit.ParentHashes)
 			}
 
 			if len(commit.ParentHashes) == 0 {
@@ -162,7 +164,9 @@ var bumpCmd = &cobra.Command{
 			}
 
 			if len(commit.ParentHashes) > 1 {
-				log.Fatal("bff only works with linear history")
+				//log.Fatal("bff only works with linear history")
+				fmt.Println(commit)
+				fmt.Println(commit.ParentHashes)
 			}
 
 			if len(commit.ParentHashes) == 0 {
