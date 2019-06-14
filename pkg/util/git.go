@@ -10,6 +10,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 // GetGitAuthor returns the author name and email
@@ -60,7 +61,6 @@ func LatestTagCommitHash(repo *git.Repository) (*string, *plumbing.Hash, error) 
 	}
 
 	err = tags.ForEach(func(tag *plumbing.Reference) error {
-		// logrus.Infof("Visiting tag %s", tag.Name().String())
 		tagIndex[tag.Hash().String()] = strings.Replace(tag.Name().String(), "refs/tags/v", "", -1)
 		return nil
 	})
@@ -82,14 +82,9 @@ func LatestTagCommitHash(repo *git.Repository) (*string, *plumbing.Hash, error) 
 
 	err = gitLog.ForEach(func(c *object.Commit) error {
 		if v, ok := tagIndex[c.Hash.String()]; ok {
-			// logrus.Warnf("Found tag %s; break", v)
 			latestVersionTag = v
 			latestVersionHash = c.Hash
 			return storer.ErrStop
-		}
-
-		if len(c.ParentHashes) > 1 {
-			return errors.New("bff only works with linear history")
 		}
 
 		if len(c.ParentHashes) == 0 {
@@ -100,4 +95,22 @@ func LatestTagCommitHash(repo *git.Repository) (*string, *plumbing.Hash, error) 
 	})
 	return &latestVersionTag, &latestVersionHash, errors.Wrap(err, "error searching git history for latest tag")
 
+}
+
+// GetLatestParentCommit returns the most recent parent commit
+func GetLatestParentCommit(commit *object.Commit) (*object.Commit, error) {
+	var recentParentCommit *object.Commit
+	if commit.NumParents() > 1 {
+		log.Warnf("Commit %s has more than 1 parent", commit.Hash.String())
+	}
+	for i := 0; i < commit.NumParents(); i++ {
+		currentParentCommit, err := commit.Parent(i)
+		if err != nil {
+			return recentParentCommit, errors.Wrap(err, "unable to retrieve a parent hash")
+		}
+		if i == 0 || currentParentCommit.Author.When.After(recentParentCommit.Author.When) {
+			recentParentCommit = currentParentCommit
+		}
+	}
+	return recentParentCommit, nil
 }
