@@ -3,7 +3,6 @@ package util
 import (
 	"os/exec"
 	"strings"
-	"fmt"
 
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -50,8 +49,7 @@ func LatestTagCommitHash(repo *git.Repository) (*string, *plumbing.Hash, error) 
 		return nil, nil, errors.Wrap(err, "could not fetch master commit")
 	}
 	if headRef.Hash() != masterRef.Hash() {
-		fmt.Println(headRef.Hash())
-		//return nil, nil, errors.New("please only release versions from master. SHAs on branches could go away if a branch is rebased or squashed")
+		return nil, nil, errors.New("please only release versions from master. SHAs on branches could go away if a branch is rebased or squashed")
 	}
 
 	tagIndex := make(map[string]string)
@@ -62,7 +60,6 @@ func LatestTagCommitHash(repo *git.Repository) (*string, *plumbing.Hash, error) 
 	}
 
 	err = tags.ForEach(func(tag *plumbing.Reference) error {
-		// logrus.Infof("Visiting tag %s", tag.Name().String())
 		tagIndex[tag.Hash().String()] = strings.Replace(tag.Name().String(), "refs/tags/v", "", -1)
 		return nil
 	})
@@ -84,16 +81,16 @@ func LatestTagCommitHash(repo *git.Repository) (*string, *plumbing.Hash, error) 
 
 	err = gitLog.ForEach(func(c *object.Commit) error {
 		if v, ok := tagIndex[c.Hash.String()]; ok {
-			// logrus.Warnf("Found tag %s; break", v)
 			latestVersionTag = v
 			latestVersionHash = c.Hash
 			return storer.ErrStop
 		}
 
 		if len(c.ParentHashes) > 1 {
-			fmt.Println("Hello")
-			fmt.Println(c.ParentHashes)
-			//return errors.New("bff only works with linear history")
+			_, err := GetLatestParentCommit(c)
+			if err != nil {
+				return err
+			}
 		}
 
 		if len(c.ParentHashes) == 0 {
@@ -104,4 +101,19 @@ func LatestTagCommitHash(repo *git.Repository) (*string, *plumbing.Hash, error) 
 	})
 	return &latestVersionTag, &latestVersionHash, errors.Wrap(err, "error searching git history for latest tag")
 
+}
+
+// GetLatestParentCommit returns the most recent parent commit
+func GetLatestParentCommit(commit *object.Commit) (*object.Commit, error) {
+	var recentParentCommit *object.Commit
+	for i := 0; i < commit.NumParents(); i++ {
+		currentParentCommit, err := commit.Parent(i)
+		if err != nil {
+			return recentParentCommit, errors.Wrap(err, "unable to retrieve a parent hash")
+		}
+		if i == 0 || currentParentCommit.Author.When.After(recentParentCommit.Author.When) {
+			recentParentCommit = currentParentCommit
+		}
+	}
+	return recentParentCommit, nil
 }

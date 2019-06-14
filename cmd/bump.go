@@ -112,17 +112,11 @@ var bumpCmd = &cobra.Command{
 				break
 			}
 
-			if len(commit.ParentHashes) > 1 {
-				//log.Fatal("bff only works with linear history")
-				fmt.Println(commit)
-				fmt.Println(commit.ParentHashes)
-			}
-
 			if len(commit.ParentHashes) == 0 {
 				// When we get here we should be at the beginning of this repo's history
 				break
 			}
-			commit, err = commit.Parent(0)
+			commit, err = util.GetLatestParentCommit(commit)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -163,17 +157,11 @@ var bumpCmd = &cobra.Command{
 				feature = true
 			}
 
-			if len(commit.ParentHashes) > 1 {
-				//log.Fatal("bff only works with linear history")
-				fmt.Println(commit)
-				fmt.Println(commit.ParentHashes)
-			}
-
 			if len(commit.ParentHashes) == 0 {
 				// When we get here we should be at the beginning of this repo's history
 				break
 			}
-			commit, err = commit.Parent(0)
+			commit, err = util.GetLatestParentCommit(commit)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -238,7 +226,7 @@ var bumpCmd = &cobra.Command{
 	},
 }
 
-//  ReleaseType will calculate whether the next release should be major, minor or patch
+// ReleaseType will calculate whether the next release should be major, minor or patch
 func ReleaseType(major uint64, breaking, feature bool) string {
 	if major < 1 {
 		if breaking || feature {
@@ -256,6 +244,7 @@ func ReleaseType(major uint64, breaking, feature bool) string {
 	}
 }
 
+// NewVersion returns the next version based on the current version and next release type
 func NewVersion(ver semver.Version, releaseType string) semver.Version {
 	switch releaseType {
 	case "major":
