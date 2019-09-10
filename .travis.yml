@@ -1,6 +1,6 @@
 language: go
 go:
-- '1.11'
+  - "1.12"
 install:
   - make setup
   - npm install -g snyk
