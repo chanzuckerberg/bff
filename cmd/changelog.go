@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"regexp"
 	"strings"
 	"syscall"
 	"time"
-	"regexp"
 
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 
@@ -76,13 +76,12 @@ var changelogCmd = &cobra.Command{
 			return err
 		}
 		fmt.Println("Done.")
-
 		return nil
 	},
 }
 
 // GetCommitLog takes a commit object and returns a commit log that may link to a pull request, for example:
-// * [2847a2e6](../../commit/2847a2e624ee6736b43cc3a68acd75368d1a75d1) A commit message 
+// * [2847a2e6](../../commit/2847a2e624ee6736b43cc3a68acd75368d1a75d1) A commit message
 // * [2847a2e6](../../commit/2847a2e624ee6736b43cc3a68acd75368d1a75d1) A commit message ([#100](../../pull/100))
 func GetCommitLog(commit *object.Commit) string {
 	hash := commit.Hash.String()
@@ -97,9 +96,9 @@ func GetCommitLog(commit *object.Commit) string {
 		} else {
 			// extract message and PR number from commitMsg
 			message, prNum := commitMsg[:idx[0]], commitMsg[idx[0]+2:idx[1]-1]
-			
+
 			commitLog = fmt.Sprintf("* [%s](../../commit/%s) %s([#%s](../../pull/%s))", shortHash, hash, message, prNum, prNum)
-		}	
+		}
 		return commitLog
 	}
 	return ""
@@ -126,14 +125,16 @@ func UpdateChangeLogFile(newContent string) error {
 	updatedChangeLog := GetNewChangeLog(lines, newContent, 2)
 
 	// Delete the existing changelog, and write the updated changelog
-	f.Truncate(0)
-	f.Seek(0, 0)
-	_, err = f.WriteString(updatedChangeLog)
+	err = f.Truncate(0)
 	if err != nil {
-		return errors.Wrap(err, "unable to edit CHANGELOG.md")
+		return errors.Wrap(err, "unable to truncate existing CHANGELOG.md")
 	}
-
-	return nil
+	_, err = f.Seek(0, 0)
+	if err != nil {
+		return errors.Wrap(err, "unable to go to start of CHANGELOG.md")
+	}
+	_, err = f.WriteString(updatedChangeLog)
+	return errors.Wrap(err, "unable to edit CHANGELOG.md")
 }
 
 // GetNewChangeLog inserts new content just before the index'th line and returns all content as string
