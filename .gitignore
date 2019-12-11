@@ -2,4 +2,4 @@ coverage.txt
 bff
 .vscode
 dist
-vendor/gopkg.in/src-d/go-billy.v4/go.sum
+vendor/gopkg.in/src-d/go-billy.v4/go.sumbin

@@ -4,14 +4,20 @@ go:
   - "1.13.1"
 install:
   - npm install -g snyk
+  - make setup
 jobs:
   include:
-    - stage: check
+    - name: lint
+      stage: check
+      script: make lint-ci
+    - name: test
+      stage: check
       script:
         - make test
       after_success:
         - bash <(curl -s https://codecov.io/bash)
-    - stage: check
+    - name: snyk
+      stage: check
       script:
         - snyk monitor --org=czi
         - snyk test
