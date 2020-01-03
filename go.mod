@@ -1,6 +1,6 @@
 module github.com/chanzuckerberg/bff
 
-go 1.13
+go 1.13.5
 
 require (
 	github.com/blang/semver v3.5.1+incompatible
