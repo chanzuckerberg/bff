@@ -86,7 +86,13 @@ var bumpCmd = &cobra.Command{
 		}
 
 		tags.ForEach(func(tag *plumbing.Reference) error {
-			tagIndex[tag.Hash().String()] = strings.Replace(tag.Name().String(), "refs/tags/v", "", -1)
+			str := strings.Replace(tag.Name().String(), "refs/tags/v", "", -1)
+			_, err := semver.Parse(str)
+			if err != nil {
+				fmt.Printf("Error parsing version %s\n", str)
+			} else {
+				tagIndex[tag.Hash().String()] = str
+			}
 			return nil
 		})
 
