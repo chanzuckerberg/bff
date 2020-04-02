@@ -58,7 +58,12 @@ var bumpCmd = &cobra.Command{
 		}
 
 		if !s.IsClean() {
-			return errors.New("please release only from a clean working directory (no uncommitted changes)")
+			// HACK(el): go-git does not appear to handle nested .gitignores well
+			// for now, prompt users instead of erroring out immediately
+			ignore := prompt.Confirm("your working directory appears to be dirty (uncommited changes), are you sure you want to proceed?")
+			if !ignore {
+				return errors.New("please release only from a clean working directory (no uncommitted changes)")
+			}
 		}
 
 		headRef, err := repo.Head()
