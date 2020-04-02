@@ -15,13 +15,16 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	git "gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
 func init() {
 	rootCmd.AddCommand(bumpCmd)
 }
+
+var (
+	initialVersion = "0.0.0"
+)
 
 // bumpCmd represents the bump command
 var bumpCmd = &cobra.Command{
@@ -55,7 +58,12 @@ var bumpCmd = &cobra.Command{
 		}
 
 		if !s.IsClean() {
-			return errors.New("please release only from a clean working directory (no uncommitted changes)")
+			// HACK(el): go-git does not appear to handle nested .gitignores well
+			// for now, prompt users instead of erroring out immediately
+			ignore := prompt.Confirm("your working directory appears to be dirty (uncommited changes), are you sure you want to proceed?")
+			if !ignore {
+				return errors.New("please release only from a clean working directory (no uncommitted changes)")
+			}
 		}
 
 		headRef, err := repo.Head()
@@ -78,44 +86,10 @@ var bumpCmd = &cobra.Command{
 			fmt.Println("SHAs on branches could go away if a branch is rebased or squashed.")
 		}
 
-		tagIndex := make(map[string]string)
-
-		tags, err := repo.Tags()
+		commit := masterCommit
+		latestVersionTag, latestVersionHash, err := util.LatestTagCommitHash(repo)
 		if err != nil {
 			return err
-		}
-
-		tags.ForEach(func(tag *plumbing.Reference) error {
-			str := strings.Replace(tag.Name().String(), "refs/tags/v", "", -1)
-			_, err := semver.Parse(str)
-			if err != nil {
-				fmt.Printf("Error parsing version %s\n", str)
-			} else {
-				tagIndex[tag.Hash().String()] = str
-			}
-			return nil
-		})
-
-		commit := masterCommit
-		var latestVersionTag string
-		var latestVersionHash string
-
-		// TODO refactor to use repo.Log()
-		for {
-			if v, ok := tagIndex[commit.Hash.String()]; ok {
-				latestVersionTag = v
-				latestVersionHash = commit.Hash.String()
-				break
-			}
-
-			if len(commit.ParentHashes) == 0 {
-				// When we get here we should be at the beginning of this repo's history
-				break
-			}
-			commit, err = util.GetLatestParentCommit(commit)
-			if err != nil {
-				return err
-			}
 		}
 
 		f, err := os.Open("VERSION")
@@ -128,7 +102,7 @@ var bumpCmd = &cobra.Command{
 		}
 		fileVersion := strings.TrimSpace(string(d))
 
-		if latestVersionTag != fileVersion {
+		if latestVersionTag != nil && *latestVersionTag != fileVersion {
 			fmt.Printf("latestVersionTag %#v\n", latestVersionTag)
 			fmt.Printf("fileversion %#v\n", fileVersion)
 			return errors.New("tag does not match VERSION file")
@@ -140,7 +114,7 @@ var bumpCmd = &cobra.Command{
 		// TODO check that we actually have commits since the last release
 		commit = masterCommit
 		for {
-			if commit.Hash.String() == latestVersionHash {
+			if commit.Hash.String() == latestVersionHash.String() {
 				break
 			}
 
@@ -164,7 +138,12 @@ var bumpCmd = &cobra.Command{
 
 		pretty.Print(feature)
 
-		ver, err := semver.Make(latestVersionTag)
+		// at this point, if latestVersionTag == nil then set to 0.0.1
+		if latestVersionTag == nil {
+			latestVersionTag = &initialVersion
+		}
+
+		ver, err := semver.Make(*latestVersionTag)
 		if err != nil {
 			return err
 		}
