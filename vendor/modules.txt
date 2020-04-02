@@ -10,7 +10,7 @@ github.com/emirpasic/gods/lists/arraylist
 github.com/emirpasic/gods/trees
 github.com/emirpasic/gods/trees/binaryheap
 github.com/emirpasic/gods/utils
-# github.com/howeyc/gopass v0.0.0-20170109162249-bf9dde6d0d2c
+# github.com/howeyc/gopass v0.0.0-20190910152052-7cb4b85ec19c
 ## explicit
 github.com/howeyc/gopass
 # github.com/inconshreveable/mousetrap v1.0.0
@@ -19,30 +19,29 @@ github.com/inconshreveable/mousetrap
 github.com/jbenet/go-context/io
 # github.com/kevinburke/ssh_config v0.0.0-20190725054713-01f96b0aa0cd
 github.com/kevinburke/ssh_config
-# github.com/konsorten/go-windows-terminal-sequences v1.0.2
-## explicit
+# github.com/konsorten/go-windows-terminal-sequences v1.0.1
 github.com/konsorten/go-windows-terminal-sequences
-# github.com/kr/pretty v0.1.0
+# github.com/kr/pretty v0.2.0
 ## explicit
 github.com/kr/pretty
 # github.com/kr/text v0.1.0
 github.com/kr/text
 # github.com/mitchellh/go-homedir v1.1.0
 github.com/mitchellh/go-homedir
-# github.com/pkg/errors v0.8.1
+# github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
-# github.com/segmentio/go-prompt v0.0.0-20161017233205-f0d19b6901ad
+# github.com/segmentio/go-prompt v1.2.1-0.20161017233205-f0d19b6901ad
 ## explicit
 github.com/segmentio/go-prompt
 # github.com/sergi/go-diff v1.0.0
 github.com/sergi/go-diff/diffmatchpatch
-# github.com/sirupsen/logrus v1.4.2
+# github.com/sirupsen/logrus v1.5.0
 ## explicit
 github.com/sirupsen/logrus
-# github.com/spf13/cobra v0.0.4
+# github.com/spf13/cobra v0.0.7
 ## explicit
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.3
@@ -52,7 +51,7 @@ github.com/src-d/gcfg
 github.com/src-d/gcfg/scanner
 github.com/src-d/gcfg/token
 github.com/src-d/gcfg/types
-# github.com/stretchr/testify v1.3.0
+# github.com/stretchr/testify v1.5.1
 ## explicit
 github.com/stretchr/testify/assert
 # github.com/xanzy/ssh-agent v0.2.1
@@ -134,3 +133,5 @@ gopkg.in/src-d/go-git.v4/utils/merkletrie/internal/frame
 gopkg.in/src-d/go-git.v4/utils/merkletrie/noder
 # gopkg.in/warnings.v0 v0.1.2
 gopkg.in/warnings.v0
+# gopkg.in/yaml.v2 v2.2.2
+gopkg.in/yaml.v2
