@@ -46,7 +46,6 @@ coverage: ## run the go coverage tool, reading file coverage.out
 
 deps:
 	go mod tidy
-	go mod vendor
 .PHONY: deps
 
 test: deps ## run the tests
@@ -70,3 +69,8 @@ clean: ## clean the repo
 	go clean
 	rm -rf dist
 .PHONY: clean
+
+check-mod:
+	go mod tidy
+	git diff --exit-code -- go.mod go.sum
+.PHONY: check-mod

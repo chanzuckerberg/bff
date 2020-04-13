@@ -10,6 +10,9 @@ jobs:
     - name: lint
       stage: check
       script: make lint-ci
+    - name: check-mod
+      stage: check
+      script: make check-mod
     - name: test
       stage: check
       script:
