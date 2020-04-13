@@ -2,7 +2,6 @@ SHA=$(shell git rev-parse --short HEAD)
 VERSION=$(shell cat VERSION)
 DIRTY=$(shell if `git diff-index --quiet HEAD --`; then echo false; else echo true;  fi)
 LDFLAGS=-ldflags "-w -s -X github.com/chanzuckerberg/bff/util.GitSha=${SHA} -X github.com/chanzuckerberg/bff/util.Version=${VERSION} -X github.com/chanzuckerberg/bff/util.Dirty=${DIRTY}"
-export GOFLAGS=-mod=vendor
 export GO111MODULE=on
 
 all: test
@@ -46,7 +45,6 @@ coverage: ## run the go coverage tool, reading file coverage.out
 
 deps:
 	go mod tidy
-	go mod vendor
 .PHONY: deps
 
 test: deps ## run the tests
@@ -70,3 +68,8 @@ clean: ## clean the repo
 	go clean
 	rm -rf dist
 .PHONY: clean
+
+check-mod:
+	go mod tidy
+	git diff --exit-code -- go.mod go.sum
+.PHONY: check-mod
