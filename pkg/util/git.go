@@ -9,7 +9,9 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 
+	"github.com/blang/semver"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -61,7 +63,20 @@ func LatestTagCommitHash(repo *git.Repository) (*string, *plumbing.Hash, error) 
 	}
 
 	err = tags.ForEach(func(tag *plumbing.Reference) error {
-		tagIndex[tag.Hash().String()] = strings.Replace(tag.Name().String(), "refs/tags/v", "", -1)
+		tagName := strings.Replace(tag.Name().String(), "refs/tags/v", "", -1)
+		version, err := semver.Parse(tagName)
+		logrus.Infof("looking at tag %s", tagName)
+		if err != nil {
+			logrus.WithError(err).Debugf("tag (%s) not valid semver, skipping", tagName) // but we continue looking for tags that are
+			return nil
+		}
+
+		if len(version.Pre) > 0 || len(version.Build) > 0 {
+			logrus.Debugf("tag (%s) looks like a prerelease or a build, skipping", tagName)
+			return nil
+		}
+
+		tagIndex[tag.Hash().String()] = tagName
 		return nil
 	})
 	if err != nil {
