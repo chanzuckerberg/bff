@@ -103,7 +103,11 @@ var bumpCmd = &cobra.Command{
 		fileVersion := strings.TrimSpace(string(d))
 
 		if latestVersionTag != nil && *latestVersionTag != fileVersion {
-			fmt.Printf("latestVersionTag %#v\n", *latestVersionTag)
+			if latestVersionTag == nil {
+				fmt.Printf("latestVersionTag %#v\n", latestVersionTag)
+			} else {
+				fmt.Printf("latestVersionTag %\n", *latestVersionTag)
+			}
 			fmt.Printf("fileversion %#v\n", fileVersion)
 			return errors.New("tag does not match VERSION file")
 		}
