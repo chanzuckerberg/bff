@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -66,27 +67,18 @@ var bumpCmd = &cobra.Command{
 			}
 		}
 
-		headRef, err := repo.Head()
+		// (aku): We need to run this command to get the current default branch in HEAD
+		defaultBranchBytes, err := exec.Command("git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'").Output()
+		if err != nil {
+			return err
+		}
+		defaultBranch := string(defaultBranchBytes)
+
+		defaultBranchCommit, err := util.VerifyDefaultBranch(repo, defaultBranch)
 		if err != nil {
 			return err
 		}
 
-		masterRef, err := repo.Reference("refs/remotes/origin/master", true)
-		if err != nil {
-			return err
-		}
-
-		masterCommit, err := repo.CommitObject(masterRef.Hash())
-		if err != nil {
-			return err
-		}
-
-		if headRef.Hash() != masterRef.Hash() {
-			fmt.Println("Please only release versions from master.")
-			fmt.Println("SHAs on branches could go away if a branch is rebased or squashed.")
-		}
-
-		commit := masterCommit
 		latestVersionTag, latestVersionHash, err := util.LatestTagCommitHash(repo)
 		if err != nil {
 			return err
@@ -106,7 +98,7 @@ var bumpCmd = &cobra.Command{
 			if latestVersionTag == nil {
 				fmt.Printf("latestVersionTag %#v\n", latestVersionTag)
 			} else {
-				fmt.Printf("latestVersionTag %\n", *latestVersionTag)
+				fmt.Printf("latestVersionTag %#v\n", *latestVersionTag)
 			}
 			fmt.Printf("fileversion %#v\n", fileVersion)
 			return errors.New("tag does not match VERSION file")
@@ -116,7 +108,7 @@ var bumpCmd = &cobra.Command{
 
 		// TODO refactor to use Log
 		// TODO check that we actually have commits since the last release
-		commit = masterCommit
+		commit := defaultBranchCommit
 		for {
 			if commit.Hash.String() == latestVersionHash.String() {
 				break
