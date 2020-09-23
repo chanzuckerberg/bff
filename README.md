@@ -17,7 +17,7 @@ brew install bff
 You can use the godownloader script like so–
 
 ```
-curl -L https://raw.githubusercontent.com/chanzuckerberg/bff/master/download.sh | sh
+curl -L https://raw.githubusercontent.com/chanzuckerberg/bff/main/download.sh | sh
 ```
 
 See the script for parameters.
