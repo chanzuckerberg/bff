@@ -25,19 +25,10 @@ See the script for parameters.
 # Common Errors
 
 - Branch errors
-You might see this if your git head's branch is different from the default branch. 
+
+To change the default branch in `head` to a new default branch, run this:
 ```
-➜  aws-oidc git:(main) bff bump
-Please only release versions from master.
-SHAs on branches could go away if a branch is rebased or squashed.
-latestVersionTag "0.22.3+96d6e06"
-fileversion "0.22.3"
-FATA[0000] tag does not match VERSION file              
-make: *** [release] Error 1
-```
-To change the default branch in `head` from master to main, run this:
-```
-git remote set-head origin main
+git remote set-head origin -a
 ```
 Then try running the bff command again. Make sure the default branch is clean!
 
