@@ -67,8 +67,14 @@ var bumpCmd = &cobra.Command{
 			}
 		}
 
+		// Run git remote set-head origin -a to change the HEAD branch to the default branch (often master or main)
+		_, err = exec.Command("git remote set-head origin -a").Output()
+		if err != nil {
+			return err
+		}
+
 		// (aku): We need to run this command to get the current default branch in HEAD
-		defaultBranchBytes, err := exec.Command("git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'").Output()
+		defaultBranchBytes, err := exec.Command("echo $(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@')").Output()
 		if err != nil {
 			return err
 		}
