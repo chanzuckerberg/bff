@@ -3,11 +3,14 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
 
 var cfgFile string
+var defaultBranchRef string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -26,6 +29,22 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
+	// Update HEAD to upstream default branch
+	combinedOut, err := exec.Command("git", "remote", "set-head", "origin", "-a").CombinedOutput()
+	if err != nil {
+		fmt.Println("git remote set-head origin -a output: ", string(combinedOut))
+		fmt.Println("error: ", err)
+		os.Exit(1)
+	}
+
+	// Get the branch ref
+	cmdOutput, err := exec.Command("git", "symbolic-ref", "refs/remotes/origin/HEAD").Output()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	defaultBranchRef = strings.TrimSpace(string(cmdOutput))
 	// // Here you will define your flags and configuration settings.
 	// // Cobra supports persistent flags, which, if defined here,
 	// // will be global for your application.

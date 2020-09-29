@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -67,25 +66,11 @@ var bumpCmd = &cobra.Command{
 			}
 		}
 
-		// Run git remote set-head origin -a to change the HEAD branch to the default branch (often master or main)
-		_, err = exec.Command("git remote set-head origin -a").Output()
+		defaultBranchCommit, err := util.VerifyDefaultBranch(repo, defaultBranchRef)
 		if err != nil {
 			return err
 		}
-
-		// (aku): We need to run this command to get the current default branch in HEAD
-		defaultBranchBytes, err := exec.Command("echo $(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@')").Output()
-		if err != nil {
-			return err
-		}
-		defaultBranch := string(defaultBranchBytes)
-
-		defaultBranchCommit, err := util.VerifyDefaultBranch(repo, defaultBranch)
-		if err != nil {
-			return err
-		}
-
-		latestVersionTag, latestVersionHash, err := util.LatestTagCommitHash(repo)
+		latestVersionTag, latestVersionHash, err := util.LatestTagCommitHash(repo, defaultBranchRef)
 		if err != nil {
 			return err
 		}

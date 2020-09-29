@@ -44,15 +44,8 @@ func runCmd(cmd string, args []string) ([]byte, error) {
 }
 
 // LatestTagCommitHash will get the latest tag and commit hash for a repo
-func LatestTagCommitHash(repo GitRepoIface) (*string, *plumbing.Hash, error) {
-
-	defaultBranchBytes, err := runCmd("git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'", []string{})
-	if err != nil {
-		return nil, nil, err
-	}
-	defaultBranch := string(defaultBranchBytes)
-
-	defaultBranchCommit, err := VerifyDefaultBranch(repo, defaultBranch)
+func LatestTagCommitHash(repo GitRepoIface, branchRef string) (*string, *plumbing.Hash, error) {
+	branchCommit, err := VerifyDefaultBranch(repo, branchRef)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -85,7 +78,7 @@ func LatestTagCommitHash(repo GitRepoIface) (*string, *plumbing.Hash, error) {
 		return nil, nil, errors.Wrap(err, "error iterating over repo tags")
 	}
 
-	commit := defaultBranchCommit
+	commit := branchCommit
 	var latestVersionTag string
 	var latestVersionHash plumbing.Hash
 
@@ -115,16 +108,16 @@ func LatestTagCommitHash(repo GitRepoIface) (*string, *plumbing.Hash, error) {
 }
 
 // VerifyDefaultBranch returns the default branch's commit, according to HEAD
-func VerifyDefaultBranch(repo GitRepoIface, defaultBranch string) (*object.Commit, error) {
+func VerifyDefaultBranch(repo GitRepoIface, defaultBranchRef string) (*object.Commit, error) {
 	headRef, err := repo.Head()
 	if err != nil {
 		return nil, errors.Wrap(err, "could not get HEAD commit hash")
 	}
 
-	plumbingRef := plumbing.ReferenceName(fmt.Sprintf("refs/remotes/origin/%s", defaultBranch))
+	plumbingRef := plumbing.ReferenceName(defaultBranchRef)
 	defaultRef, err := repo.Reference(plumbingRef, true)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "Unable to reference plumbingRef at %s", defaultBranchRef)
 	}
 
 	defaultBranchCommit, err := repo.CommitObject(defaultRef.Hash())
@@ -133,7 +126,7 @@ func VerifyDefaultBranch(repo GitRepoIface, defaultBranch string) (*object.Commi
 	}
 
 	if headRef.Hash() != defaultRef.Hash() {
-		errMsg := fmt.Sprintf("Please only release versions from %s.\nSHAs on branches could go away if a branch is rebased or squashed.", string(defaultBranch))
+		errMsg := fmt.Sprintf("Please only release versions from %s.\nSHAs on branches could go away if a branch is rebased or squashed.", string(defaultBranchRef))
 		return nil, errors.Errorf(errMsg)
 	}
 
