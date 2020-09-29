@@ -37,13 +37,12 @@ func init() {
 		os.Exit(1)
 	}
 
-	// Get the branch ref
+	// Get the branch ref, will be used for bump & changelog commands
 	cmdOutput, err := exec.Command("git", "symbolic-ref", "refs/remotes/origin/HEAD").Output()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
 	defaultBranchRef = strings.TrimSpace(string(cmdOutput))
 	// // Here you will define your flags and configuration settings.
 	// // Cobra supports persistent flags, which, if defined here,
