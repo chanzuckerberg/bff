@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"os/exec"
 	"strings"
 
@@ -14,6 +15,14 @@ import (
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
+
+type GitRepoIface interface {
+	CommitObject(h plumbing.Hash) (*object.Commit, error)
+	Head() (*plumbing.Reference, error)
+	Log(o *git.LogOptions) (object.CommitIter, error)
+	Reference(name plumbing.ReferenceName, resolved bool) (*plumbing.Reference, error)
+	Tags() (storer.ReferenceIter, error)
+}
 
 // GetGitAuthor returns the author name and email
 func GetGitAuthor() (string, string, error) {
@@ -35,24 +44,10 @@ func runCmd(cmd string, args []string) ([]byte, error) {
 }
 
 // LatestTagCommitHash will get the latest tag and commit hash for a repo
-func LatestTagCommitHash(repo *git.Repository) (*string, *plumbing.Hash, error) {
-	headRef, err := repo.Head()
+func LatestTagCommitHash(repo GitRepoIface, branchRef string) (*string, *plumbing.Hash, error) {
+	branchCommit, err := VerifyDefaultBranch(repo, branchRef)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "could not get HEAD commit hash")
-	}
-
-	// TODO: deal with repos without a master branch
-	masterRef, err := repo.Reference("refs/remotes/origin/master", true)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "could not get master commit hash")
-	}
-
-	masterCommit, err := repo.CommitObject(masterRef.Hash())
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "could not fetch master commit")
-	}
-	if headRef.Hash() != masterRef.Hash() {
-		return nil, nil, errors.New("please only release versions from master. SHAs on branches could go away if a branch is rebased or squashed")
+		return nil, nil, err
 	}
 
 	tagIndex := make(map[string]string)
@@ -83,7 +78,7 @@ func LatestTagCommitHash(repo *git.Repository) (*string, *plumbing.Hash, error) 
 		return nil, nil, errors.Wrap(err, "error iterating over repo tags")
 	}
 
-	commit := masterCommit
+	commit := branchCommit
 	var latestVersionTag string
 	var latestVersionHash plumbing.Hash
 
@@ -110,6 +105,32 @@ func LatestTagCommitHash(repo *git.Repository) (*string, *plumbing.Hash, error) 
 	})
 	return &latestVersionTag, &latestVersionHash, errors.Wrap(err, "error searching git history for latest tag")
 
+}
+
+// VerifyDefaultBranch returns the default branch's commit, according to HEAD
+func VerifyDefaultBranch(repo GitRepoIface, defaultBranchRef string) (*object.Commit, error) {
+	headRef, err := repo.Head()
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get HEAD commit hash")
+	}
+
+	plumbingRef := plumbing.ReferenceName(defaultBranchRef)
+	defaultRef, err := repo.Reference(plumbingRef, true)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Unable to reference plumbingRef at %s", defaultBranchRef)
+	}
+
+	defaultBranchCommit, err := repo.CommitObject(defaultRef.Hash())
+	if err != nil {
+		return nil, err
+	}
+
+	if headRef.Hash() != defaultRef.Hash() {
+		errMsg := fmt.Sprintf("Please only release versions from %s.\nSHAs on branches could go away if a branch is rebased or squashed.", string(defaultBranchRef))
+		return nil, errors.Errorf(errMsg)
+	}
+
+	return defaultBranchCommit, nil
 }
 
 // GetLatestParentCommit returns the most recent parent commit

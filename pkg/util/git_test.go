@@ -7,7 +7,34 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
+	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 )
+
+type validRepo struct{}
+
+func (r *validRepo) CommitObject(h plumbing.Hash) (*object.Commit, error) {
+	return nil, nil
+}
+
+func (r *validRepo) Head() (*plumbing.Reference, error) {
+	return nil, nil
+}
+
+func (r *validRepo) Log(o *git.LogOptions) (object.CommitIter, error) {
+	return nil, nil
+}
+
+func (r *validRepo) Reference(name plumbing.ReferenceName, resolved bool) (*plumbing.Reference, error) {
+	return nil, nil
+}
+
+func (r *validRepo) Tags() (storer.ReferenceIter, error) {
+	return nil, nil
+}
 
 func Test_getGitAuthor(t *testing.T) {
 	a := assert.New(t)
