@@ -38,7 +38,7 @@ var changelogCmd = &cobra.Command{
 		if err != nil {
 			return errors.Wrap(err, "could not open git repo")
 		}
-		v, tagCommitHash, err := util.LatestTagCommitHash(repo)
+		v, tagCommitHash, err := util.LatestTagCommitHash(repo, defaultBranchRef)
 		if err != nil {
 			return errors.Wrap(err, "unable to retrieve latest tag's commit hash")
 		}
