@@ -75,8 +75,3 @@ func TestHelperProcess(t *testing.T) {
 
 	os.Exit(0)
 }
-
-func TestDefaultBranch(t *testing.T) {
-	// defaultBranch := "master"
-	// repo := validRepo{}
-}
