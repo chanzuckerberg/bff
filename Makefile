@@ -15,10 +15,6 @@ lint: ## run the fast go linters
 	golangci-lint run
 .PHONY: lint
 
-lint-all: ## run the fast go linters
-	golangci-lint run
-.PHONY: lint-all
-
 release: build ## run a release
 	./bff bump
 	git push
@@ -33,8 +29,8 @@ build: deps ## build the binary
 	go build ${LDFLAGS} .
 .PHONY: build
 
-coverage: ## run the go coverage tool, reading file coverage.out
-	go tool cover -html=coverage.out
+coverage: ## run the go coverage tool, reading file coverage.txt
+	go tool cover -html=coverage.txt
 .PHONY: coverage
 
 deps:
@@ -44,10 +40,6 @@ deps:
 test: deps ## run the tests
 	go test -coverprofile=coverage.txt -covermode=atomic ./...
 .PHONY: test
-
-test-ci: ## run tests in ci (no vendor updating)
-	go test -coverprofile=coverage.txt -covermode=atomic ./...
-.PHONY: test-ci
 
 install: deps ## install the bff binary in $GOPATH/bin
 	go install ${LDFLAGS} .
