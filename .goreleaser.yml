@@ -7,6 +7,7 @@ builds:
       - linux
     goarch:
       - amd64
+      - arm64
     ldflags:
       - "-w -s -X github.com/chanzuckerberg/bff/pkg/util.GitSha={{.Commit}} -X github.com/chanzuckerberg/bff/pkg/util.Version={{.Version}} -X github.com/chanzuckerberg/bff/pkg/util.Dirty=false -X github.com/chanzuckerberg/bff/pkg/util.Release=true"
 
