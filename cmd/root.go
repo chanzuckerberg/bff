@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var cfgFile string
+// var cfgFile string
 var defaultBranchRef string
 
 // rootCmd represents the base command when called without any subcommands

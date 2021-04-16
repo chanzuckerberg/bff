@@ -105,11 +105,11 @@ var bumpCmd = &cobra.Command{
 				break
 			}
 
-			if strings.Index(commit.Message, "[breaking]") != -1 {
+			if strings.Contains(commit.Message, "[breaking]") {
 				breaking = true
 			}
 
-			if strings.Index(commit.Message, "[feature]") != -1 {
+			if strings.Contains(commit.Message, "[feature]") {
 				feature = true
 			}
 

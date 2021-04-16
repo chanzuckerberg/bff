@@ -8,21 +8,22 @@ all: test
 .PHONY: all
 
 setup: ## setup development dependencies
-	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.39.0
+	curl -sSfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh
 .PHONY: setup
 
-lint: ## run the fast go linters
-	golangci-lint run
+lint: setup ## run the fast go linters
+	./bin/golangci-lint run
 .PHONY: lint
 
 release: build ## run a release
 	./bff bump
 	git push
-	goreleaser release --rm-dist
+	./bin/goreleaser release --rm-dist
 .PHONY: release
 
 release-snapshot: ## run a release
-	goreleaser release --rm-dist --snapshot
+	./bin/goreleaser release --rm-dist --snapshot
 .PHONY: release-snapshot
 
 build: deps ## build the binary

@@ -89,7 +89,7 @@ func GetCommitLog(commit *object.Commit) string {
 		var commitLog string
 		commitMsg := strings.Split(commit.Message, "\n")[0]
 		shortHash := hash[:8]
-		r := regexp.MustCompile("\\(#\\d+\\)$")
+		r := regexp.MustCompile(`\(#\d+\)$`)
 		idx := r.FindStringIndex(commitMsg)
 		if idx == nil {
 			commitLog = fmt.Sprintf("* [%s](../../commit/%s) %s", shortHash, hash, commitMsg)
