@@ -8,11 +8,11 @@ all: test
 .PHONY: all
 
 setup: ## setup development dependencies
-	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.39.0
 .PHONY: setup
 
-lint: ## run the fast go linters
-	golangci-lint run
+lint: setup ## run the fast go linters
+	./bin/golangci-lint run
 .PHONY: lint
 
 release: build ## run a release
