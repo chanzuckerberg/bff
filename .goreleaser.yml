@@ -7,8 +7,10 @@ builds:
       - linux
     goarch:
       - amd64
+      - arm64
     ldflags:
-      - "-w -s -X github.com/chanzuckerberg/bff/pkg/util.GitSha={{.Commit}} -X github.com/chanzuckerberg/bff/pkg/util.Version={{.Version}} -X github.com/chanzuckerberg/bff/pkg/util.Dirty=false -X github.com/chanzuckerberg/bff/pkg/util.Release=true"
+      - "-w -s -X main.Date={{.CommitDate}} -X github.com/chanzuckerberg/bff/pkg/util.GitSha={{.Commit}} -X github.com/chanzuckerberg/bff/pkg/util.Version={{.Version}} -X github.com/chanzuckerberg/bff/pkg/util.Dirty=false -X github.com/chanzuckerberg/bff/pkg/util.Release=true"
+    mod_timestamp: '{{ .CommitTimestamp }}'
 
 archives:
   - files:
@@ -21,9 +23,12 @@ release:
 
 brews:
   -
+    homepage: "https://github.com/chanzuckerberg/bff"
     description: "Breaking, Feature, Fix - a tool for managing semantic versioning"
-    github:
+    license: "Apache-2.0"
+    skip_upload: auto
+    test: system "#{bin}/bff version"
+    tap:
       owner: chanzuckerberg
       name: homebrew-tap
-    homepage: "https://github.com/chanzuckerberg/bff"
-    test: system "#{bin}/bff version"
+

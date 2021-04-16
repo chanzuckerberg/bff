@@ -9,21 +9,11 @@ all: test
 
 setup: ## setup development dependencies
 	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh
-	curl -sfL https://raw.githubusercontent.com/reviewdog/reviewdog/master/install.sh| sh
 .PHONY: setup
 
 lint: ## run the fast go linters
-	./bin/reviewdog -conf .reviewdog.yml  -diff "git diff master"
-.PHONY: lint
-
-lint-ci: ## run the fast go linters
-	./bin/reviewdog -conf .reviewdog.yml  -reporter=github-pr-review
-.PHONY: lint-ci
-
-lint-all: ## run the fast go linters
-	# doesn't seem to be a way to get reviewdog to not filter by diff
 	golangci-lint run
-.PHONY: lint-all
+.PHONY: lint
 
 release: build ## run a release
 	./bff bump
@@ -39,8 +29,8 @@ build: deps ## build the binary
 	go build ${LDFLAGS} .
 .PHONY: build
 
-coverage: ## run the go coverage tool, reading file coverage.out
-	go tool cover -html=coverage.out
+coverage: ## run the go coverage tool, reading file coverage.txt
+	go tool cover -html=coverage.txt
 .PHONY: coverage
 
 deps:
@@ -50,10 +40,6 @@ deps:
 test: deps ## run the tests
 	go test -coverprofile=coverage.txt -covermode=atomic ./...
 .PHONY: test
-
-test-ci: ## run tests in ci (no vendor updating)
-	go test -coverprofile=coverage.txt -covermode=atomic ./...
-.PHONY: test-ci
 
 install: deps ## install the bff binary in $GOPATH/bin
 	go install ${LDFLAGS} .
