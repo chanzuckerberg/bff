@@ -6,6 +6,12 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
+        with:
+          # This repo requires the `main` branch to be checked out in order for tests to pass
+          # Ensure the current branch _and_ the main branch are present
+          # See: https://github.com/actions/checkout#Fetch-all-history-for-all-tags-and-branches
+          fetch-depth: 0
+
       - uses: actions/setup-go@v2
         with:
           go-version: '1.16.2'
